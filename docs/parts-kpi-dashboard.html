@@ -1,0 +1,810 @@
+<title>NISSAN 零件營運 KPI 儀表板設計提案</title>
+
+<style>
+  :root{
+    color-scheme: light;
+    --page:           #f9f9f7;
+    --surface:        #ffffff;
+    --surface-2:      #f4f4f1;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --border:         rgba(11,11,11,0.10);
+    --grid-line:      #e1e0d9;
+    --accent:         #2a78d6;
+    --accent-wash:    #eaf1fb;
+    --track:          #e9e8e3;
+
+    --good:     #0ca30c;
+    --warning:  #fab219;
+    --serious:  #ec835a;
+    --critical: #d03b3b;
+
+    --cat-1: #2a78d6; --cat-2: #eb6834; --cat-3: #1baf7a; --cat-4: #e34948; --cat-5: #4a3aa7;
+
+    --seq-100:#cde2fb; --seq-250:#86b6ef; --seq-400:#3987e5; --seq-550:#1c5cab; --seq-700:#0d366b;
+
+    --shadow-card: 0 1px 2px rgba(11,11,11,0.04), 0 1px 12px rgba(11,11,11,0.05);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --page:           #0d0d0d;
+      --surface:        #1a1a19;
+      --surface-2:      #202020;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --border:         rgba(255,255,255,0.10);
+      --grid-line:      #2c2c2a;
+      --accent:         #3987e5;
+      --accent-wash:    #142338;
+      --track:          #2a2a28;
+      --cat-1: #3987e5; --cat-2: #d95926; --cat-3: #199e70; --cat-4: #e66767; --cat-5: #9085e9;
+      --shadow-card: 0 1px 2px rgba(0,0,0,0.3), 0 1px 16px rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --page:           #0d0d0d;
+    --surface:        #1a1a19;
+    --surface-2:      #202020;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --border:         rgba(255,255,255,0.10);
+    --grid-line:      #2c2c2a;
+    --accent:         #3987e5;
+    --accent-wash:    #142338;
+    --track:          #2a2a28;
+    --cat-1: #3987e5; --cat-2: #d95926; --cat-3: #199e70; --cat-4: #e66767; --cat-5: #9085e9;
+    --shadow-card: 0 1px 2px rgba(0,0,0,0.3), 0 1px 16px rgba(0,0,0,0.35);
+  }
+
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    background:var(--page);
+    color:var(--text-primary);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1240px; margin:0 auto; padding:28px 20px 100px; }
+
+  h1,h2,h3{ text-wrap:balance; margin:0; font-weight:700; }
+  p{ margin:0; }
+  code, pre{ font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace; }
+
+  /* ---------- Header ---------- */
+  .hero{
+    display:flex; justify-content:space-between; align-items:flex-end; gap:24px;
+    padding-bottom:18px; margin-bottom:20px; border-bottom:1px solid var(--border);
+    flex-wrap:wrap;
+  }
+  .hero .eyebrow{
+    font-size:12px; letter-spacing:.08em; color:var(--accent); font-weight:700; text-transform:uppercase;
+    margin-bottom:6px;
+  }
+  .hero h1{ font-size:26px; letter-spacing:-.01em; }
+  .hero .sub{ color:var(--text-secondary); font-size:14px; margin-top:6px; }
+  .hero-meta{ display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+  .meta-chip{
+    font-size:12px; color:var(--text-secondary); background:var(--surface-2);
+    border:1px solid var(--border); border-radius:6px; padding:5px 10px;
+    display:flex; gap:6px; align-items:center;
+  }
+  .meta-chip b{ color:var(--text-primary); font-variant-numeric:tabular-nums; }
+
+  /* ---------- Filter bar ---------- */
+  .filterbar{
+    display:flex; gap:8px; flex-wrap:wrap; align-items:center;
+    padding:12px 14px; margin-bottom:20px;
+    background:var(--surface); border:1px solid var(--border); border-radius:10px;
+    box-shadow:var(--shadow-card);
+  }
+  .filterbar .flabel{ font-size:12px; color:var(--text-muted); margin-right:2px; }
+  .chip{
+    font-size:13px; padding:6px 12px; border-radius:999px; border:1px solid var(--border);
+    background:var(--surface-2); color:var(--text-secondary); cursor:pointer; user-select:none;
+    transition:background .12s ease, color .12s ease, border-color .12s ease;
+  }
+  .chip:hover{ border-color:var(--accent); }
+  .chip.active{ background:var(--accent); color:#fff; border-color:var(--accent); font-weight:600; }
+  .fsep{ width:1px; align-self:stretch; background:var(--border); margin:0 4px; }
+
+  /* ---------- Section titles ---------- */
+  .section{ margin-top:34px; }
+  .section-head{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
+  .section-head h2{ font-size:17px; }
+  .section-head .hint{ font-size:12px; color:var(--text-muted); }
+  .section-num{ font-size:11px; color:var(--text-muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px; }
+
+  /* ---------- KPI cards ---------- */
+  .kpi-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+  @media (max-width:900px){ .kpi-grid{ grid-template-columns:repeat(2,1fr); } }
+  .kpi-card{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:16px 18px; box-shadow:var(--shadow-card); position:relative; overflow:hidden;
+  }
+  .kpi-card .stripe{ position:absolute; left:0; top:0; bottom:0; width:4px; }
+  .kpi-top{ display:flex; justify-content:space-between; align-items:flex-start; }
+  .kpi-name{ font-size:13px; color:var(--text-secondary); font-weight:600; }
+  .status-pill{
+    font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px;
+    display:inline-flex; align-items:center; gap:4px;
+  }
+  .status-pill.good{ color:#0a5c0a; background:rgba(12,163,12,.14); }
+  .status-pill.warning{ color:#8a5a00; background:rgba(250,178,25,.20); }
+  .status-pill.serious{ color:#9a3f1d; background:rgba(236,131,90,.20); }
+  .status-pill.critical{ color:#8f1f1f; background:rgba(208,59,59,.16); }
+  :root[data-theme="dark"] .status-pill.good, :root:not([data-theme="light"]) .status-pill.good{ color:#7be07b; }
+  :root[data-theme="dark"] .status-pill.warning, :root:not([data-theme="light"]) .status-pill.warning{ color:#ffce6a; }
+  :root[data-theme="dark"] .status-pill.serious, :root:not([data-theme="light"]) .status-pill.serious{ color:#ffab84; }
+  :root[data-theme="dark"] .status-pill.critical, :root:not([data-theme="light"]) .status-pill.critical{ color:#ff9d9d; }
+
+  .kpi-value{ font-size:34px; font-weight:700; letter-spacing:-.01em; margin-top:10px; font-variant-numeric:tabular-nums; }
+  .kpi-value .unit{ font-size:16px; font-weight:600; color:var(--text-secondary); margin-left:2px;}
+  .kpi-target{ font-size:12px; color:var(--text-muted); margin-top:2px; font-variant-numeric:tabular-nums; }
+  .kpi-track{ height:6px; border-radius:99px; background:var(--track); margin-top:12px; overflow:hidden; }
+  .kpi-track > i{ display:block; height:100%; border-radius:99px; }
+  .kpi-foot{ margin-top:10px; font-size:11.5px; color:var(--text-muted); line-height:1.5; }
+
+  /* ---------- Bullet / target-actual bars ---------- */
+  .panel{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:18px 20px; box-shadow:var(--shadow-card);
+  }
+  .two-col{ display:grid; grid-template-columns:1.7fr 1fr; gap:14px; align-items:stretch; }
+  @media (max-width:900px){ .two-col{ grid-template-columns:1fr; } }
+
+  .viewtabs{ display:flex; gap:6px; }
+  .vtab{
+    font-size:12px; padding:5px 11px; border-radius:7px; border:1px solid var(--border);
+    background:var(--surface-2); color:var(--text-secondary); cursor:pointer; font-weight:600;
+  }
+  .vtab.active{ background:var(--accent-wash); border-color:var(--accent); color:var(--accent); }
+
+  .bullet-row{ display:grid; grid-template-columns:112px 1fr 168px; gap:12px; align-items:center; padding:9px 0; border-bottom:1px solid var(--grid-line); }
+  .bullet-row:last-child{ border-bottom:none; }
+  .bullet-label{ font-size:13px; color:var(--text-primary); font-weight:600; }
+  .bullet-track{ position:relative; height:16px; background:var(--track); border-radius:5px; }
+  .bullet-track .target-mark{ position:absolute; top:-3px; bottom:-3px; width:2px; background:var(--text-primary); opacity:.55; }
+  .bullet-track .fill{ position:absolute; left:0; top:0; bottom:0; border-radius:5px; min-width:3px; }
+  .bullet-nums{ font-size:12px; text-align:right; font-variant-numeric:tabular-nums; color:var(--text-secondary); }
+  .bullet-nums b{ color:var(--text-primary); font-size:13px; }
+  .bullet-pct{ display:inline-block; min-width:42px; text-align:right; font-weight:700; }
+
+  .legend-note{ display:flex; gap:14px; margin-top:14px; flex-wrap:wrap; font-size:11.5px; color:var(--text-muted); }
+  .legend-note span{ display:inline-flex; align-items:center; gap:5px; }
+  .legend-dot{ width:8px; height:8px; border-radius:2px; display:inline-block; }
+
+  /* ---------- Funnel ---------- */
+  .funnel-item{ margin-bottom:10px; }
+  .funnel-row{ display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:4px; }
+  .funnel-row .lbl{ color:var(--text-secondary); }
+  .funnel-row .val{ font-variant-numeric:tabular-nums; font-weight:700; }
+  .funnel-bar{ height:10px; border-radius:4px; background:var(--track); overflow:hidden; }
+  .funnel-bar > i{ display:block; height:100%; border-radius:4px; }
+  .funnel-total{
+    margin-top:14px; padding-top:12px; border-top:1px dashed var(--border);
+    display:flex; justify-content:space-between; align-items:baseline;
+  }
+  .funnel-total .n{ font-size:24px; font-weight:700; color:var(--accent); font-variant-numeric:tabular-nums; }
+  .funnel-total .l{ font-size:12.5px; color:var(--text-secondary); }
+
+  /* ---------- Heatmap ---------- */
+  .heat-wrap{ overflow-x:auto; }
+  table.heat{ border-collapse:collapse; width:100%; min-width:720px; font-size:12.5px; }
+  table.heat th, table.heat td{ padding:9px 10px; text-align:center; border-bottom:1px solid var(--grid-line); }
+  table.heat th{ color:var(--text-muted); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.03em; }
+  table.heat td.rowhead{ text-align:left; color:var(--text-primary); font-weight:700; background:var(--surface); position:sticky; left:0; }
+  table.heat td.metric{ text-align:left; color:var(--text-secondary); font-weight:600; font-size:12px; }
+  table.heat td.cell{ font-variant-numeric:tabular-nums; font-weight:700; color:#fff; }
+  .illus-badge{
+    font-size:11px; color:var(--text-muted); background:var(--surface-2); border:1px solid var(--border);
+    padding:2px 8px; border-radius:999px; font-weight:600;
+  }
+
+  /* ---------- Doc sections ---------- */
+  .prose{ font-size:14px; line-height:1.75; color:var(--text-secondary); max-width:74ch; }
+  .prose b{ color:var(--text-primary); }
+
+  table.datamap{ border-collapse:collapse; width:100%; font-size:13px; }
+  table.datamap th, table.datamap td{ text-align:left; padding:10px 12px; border-bottom:1px solid var(--grid-line); vertical-align:top; }
+  table.datamap th{ color:var(--text-muted); font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; font-weight:700; }
+  table.datamap td.sheet{ font-weight:700; color:var(--text-primary); white-space:nowrap; }
+  table.datamap td code{ background:var(--surface-2); border:1px solid var(--border); border-radius:4px; padding:1px 5px; font-size:12px; }
+
+  .code-card{
+    background:var(--surface); border:1px solid var(--border); border-radius:10px; overflow:hidden;
+    margin-bottom:14px; box-shadow:var(--shadow-card);
+  }
+  .code-card .ck-head{
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+    padding:10px 14px; background:var(--surface-2); border-bottom:1px solid var(--border);
+  }
+  .code-card .ck-head .t{ font-size:13px; font-weight:700; }
+  .code-card .ck-head .target{ font-size:11.5px; color:var(--text-muted); font-variant-numeric:tabular-nums; }
+  .code-card pre{ margin:0; padding:14px; font-size:12.3px; line-height:1.7; overflow-x:auto; color:var(--text-primary); }
+  .code-card .note{ padding:10px 14px; font-size:12px; color:var(--text-muted); border-top:1px dashed var(--border); line-height:1.6; }
+
+  .slicer-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  @media (max-width:900px){ .slicer-grid{ grid-template-columns:1fr; } }
+  .slicer-card{ background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; box-shadow:var(--shadow-card); }
+  .slicer-card .k{ font-size:12.5px; font-weight:700; color:var(--accent); margin-bottom:4px; }
+  .slicer-card .v{ font-size:12.5px; color:var(--text-secondary); line-height:1.6; }
+
+  .insight-list{ display:flex; flex-direction:column; gap:10px; }
+  .insight{
+    display:grid; grid-template-columns:26px 1fr; gap:10px;
+    background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px;
+    box-shadow:var(--shadow-card);
+  }
+  .insight .badge{
+    width:22px; height:22px; border-radius:6px; display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:800; color:#fff;
+  }
+  .insight .body b{ display:block; font-size:13.5px; margin-bottom:2px; color:var(--text-primary); }
+  .insight .body span{ font-size:12.5px; color:var(--text-secondary); line-height:1.6; }
+
+  footer{ margin-top:44px; padding-top:16px; border-top:1px solid var(--border); font-size:11.5px; color:var(--text-muted); display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;}
+</style>
+
+<div class="wrap">
+
+  <!-- ============ HEADER ============ -->
+  <div class="hero">
+    <div>
+      <div class="eyebrow">零件營運 KPI 儀表板 · 設計提案</div>
+      <h1>NISSAN 定保 &amp; 零件營運儀表板</h1>
+      <div class="sub">裕信汽車．服務部 — 依「零件DMS資料庫報表.xlsx」13 張工作表之欄位與管理條件建構</div>
+    </div>
+    <div class="hero-meta">
+      <div class="meta-chip">經銷商 <b>裕信汽車</b></div>
+      <div class="meta-chip">期間 <b>2026-08-01 ~ 08-31</b></div>
+      <div class="meta-chip">品牌 <b>NISSAN</b></div>
+    </div>
+  </div>
+
+  <!-- ============ FILTER BAR (mock slicers) ============ -->
+  <div class="filterbar" id="filterbar">
+    <span class="flabel">月份</span>
+    <div class="chip active" data-group="month">2026-08</div>
+    <div class="chip" data-group="month">2026-07</div>
+    <div class="chip" data-group="month">近12個月</div>
+    <div class="fsep"></div>
+    <span class="flabel">廠區</span>
+    <div class="chip active" data-group="area">全部</div>
+    <div class="chip" data-group="area">新北</div>
+    <div class="chip" data-group="area">台北</div>
+    <div class="fsep"></div>
+    <span class="flabel">車型</span>
+    <div class="chip active" data-group="model">全部車型</div>
+    <div class="chip" data-group="model">S餐對象 B18/P15/C12/T32/T33</div>
+    <div class="fsep"></div>
+    <span class="flabel">車輛類別</span>
+    <div class="chip active" data-group="excl">一般車</div>
+    <div class="chip" data-group="excl">含公司車</div>
+    <div class="chip" data-group="excl">含租賃/軍車</div>
+    <div class="chip" data-group="excl">含電動車</div>
+  </div>
+
+  <!-- ============ KPI CARDS ============ -->
+  <div class="section">
+    <div class="section-num">Top-line · 頂部 KPI 卡片區</div>
+    <div class="kpi-grid">
+
+      <div class="kpi-card">
+        <div class="stripe" style="background:var(--good)"></div>
+        <div class="kpi-top">
+          <div class="kpi-name">NVS 單台產值</div>
+          <div class="status-pill good">達成 149%</div>
+        </div>
+        <div class="kpi-value">283.3 <span class="unit">元/台</span></div>
+        <div class="kpi-target">目標 190 元/台 ・ 實際計算值（Aug-2026）</div>
+        <div class="kpi-track"><i style="width:100%;background:var(--good)"></i></div>
+        <div class="kpi-foot">分子 NT$694,373（未稅）÷ 分母 2,451 台（NISSAN 定保、牌照唯一）</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="stripe" style="background:var(--serious)"></div>
+        <div class="kpi-top">
+          <div class="kpi-name">S 餐使用率</div>
+          <div class="status-pill serious">初估 76%</div>
+        </div>
+        <div class="kpi-value">72.7 <span class="unit">%</span></div>
+        <div class="kpi-target">目標 96% ・ 1,150 / 1,582 台</div>
+        <div class="kpi-track"><i style="width:76%;background:var(--serious)"></i></div>
+        <div class="kpi-foot">⚠ 粗估值：尚未套用 C12/T32 選配比對與 T33 專案車型排除，正式值需經完整比對邏輯</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="stripe" style="background:var(--good)"></div>
+        <div class="kpi-top">
+          <div class="kpi-name">輪胎更換率</div>
+          <div class="status-pill good">達成 140%</div>
+        </div>
+        <div class="kpi-value">15.1 <span class="unit">%</span></div>
+        <div class="kpi-target">目標 10.8% ・ 317 / 2,107 台</div>
+        <div class="kpi-track"><i style="width:100%;background:var(--good)"></i></div>
+        <div class="kpi-foot">⚠ 分子期間僅 8/1–8/15（銷售明細匯出範圍），分母為 8/1–8/31，需期間對齊後重算</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="stripe" style="background:var(--good)"></div>
+        <div class="kpi-top">
+          <div class="kpi-name">電瓶更換率</div>
+          <div class="status-pill good">達成 127%</div>
+        </div>
+        <div class="kpi-value">18.9 <span class="unit">%</span></div>
+        <div class="kpi-target">目標 14.8% ・ 500 / 2,653 台</div>
+        <div class="kpi-track"><i style="width:100%;background:var(--good)"></i></div>
+        <div class="kpi-foot">⚠ 同左，分子涵蓋期間較短，正式上線需以相同期間視窗重算</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============ MAIN VISUALS ============ -->
+  <div class="section">
+    <div class="two-col">
+
+      <div class="panel">
+        <div class="section-head">
+          <div>
+            <div class="section-num">Main Visual · 六大商品目標達成矩陣</div>
+            <h2>品項別實際 vs. 月目標</h2>
+          </div>
+          <div class="viewtabs" id="viewtabs">
+            <div class="vtab active" data-view="rev">營收</div>
+            <div class="vtab" data-view="profit">毛利</div>
+          </div>
+        </div>
+        <div id="bullet-body"></div>
+        <div class="legend-note">
+          <span><i class="legend-dot" style="background:var(--text-primary);opacity:.55"></i> 目標刻度線</span>
+          <span><i class="legend-dot" style="background:var(--good)"></i> 達成率 ≥90%</span>
+          <span><i class="legend-dot" style="background:var(--warning)"></i> 60–90%</span>
+          <span><i class="legend-dot" style="background:var(--serious)"></i> 30–60%</span>
+          <span><i class="legend-dot" style="background:var(--critical)"></i> &lt;30%</span>
+          <span style="margin-left:auto">月目標＝六大各廠目標表年度目標 ÷ 12（估算值，正式上線請改接月度目標欄位）</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="section-num">Main Visual · 車輛排除統計</div>
+        <h2 style="font-size:16px;margin-bottom:14px;">NISSAN 定保台數篩選漏斗</h2>
+
+        <div class="funnel-item">
+          <div class="funnel-row"><span class="lbl">NISSAN 定保台數（牌照唯一）</span><span class="val">2,451</span></div>
+          <div class="funnel-bar"><i style="width:100%;background:var(--cat-1)"></i></div>
+        </div>
+        <div class="funnel-item">
+          <div class="funnel-row"><span class="lbl">− 電動車（牌照 E 開頭）</span><span class="val">6</span></div>
+          <div class="funnel-bar"><i style="width:0.2%;background:var(--critical)"></i></div>
+        </div>
+        <div class="funnel-item">
+          <div class="funnel-row"><span class="lbl">− 公司車（車主欄長度 &gt;4）</span><span class="val">293</span></div>
+          <div class="funnel-bar"><i style="width:12%;background:var(--warning)"></i></div>
+        </div>
+        <div class="funnel-item">
+          <div class="funnel-row"><span class="lbl">− 軍車 / 租賃車（牌照格式判別）</span><span class="val">0</span></div>
+          <div class="funnel-bar"><i style="width:0%;background:var(--serious)"></i></div>
+        </div>
+
+        <div class="funnel-total">
+          <div><div class="l">納入 KPI 分母之一般車輛</div></div>
+          <div class="n">2,152</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-num">Main Visual · 車型 × 車齡轉化矩陣</div>
+        <h2>S 餐 / 輪胎 / 電瓶 轉化率— 依車型與車齡分組</h2>
+      </div>
+      <span class="illus-badge">示意配置 · 實際數值需接上資料模型後由 BI 工具即時運算</span>
+    </div>
+    <div class="panel heat-wrap">
+      <table class="heat">
+        <thead>
+          <tr>
+            <th style="text-align:left">指標</th>
+            <th>B18</th><th>P15</th><th>C12</th><th>T32</th><th>T33</th>
+          </tr>
+        </thead>
+        <tbody id="heatbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============ DATA MODEL ============ -->
+  <div class="section" style="margin-top:52px;">
+    <div class="section-num">Data Model · 資料來源與欄位地圖</div>
+    <h2 style="font-size:20px;margin-bottom:6px;">資料模型與計算邏輯</h2>
+    <p class="prose">以下對照表整理報表中 13 張工作表的角色分工。每張表在匯出時已預先套用固定篩選條件（見表頭第 2–9 列，如經銷商、服務廠、期間、商品類別），建模時建議在 Power Query／ETL 階段先剝除表頭區塊（前 10~18 列為報表參數，非資料列），僅載入實際欄位標題列以下的明細資料。</p>
+
+    <div class="panel" style="margin-top:16px; overflow-x:auto;">
+      <table class="datamap">
+        <thead>
+          <tr><th>工作表</th><th>角色</th><th>關鍵欄位</th><th>用於哪個 KPI</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="sheet">定保台數</td>
+            <td>事實表（車輛/工單粒度，2,467 列）</td>
+            <td><code>牌照號碼</code> <code>品牌</code> <code>車型代碼</code> <code>車主</code> <code>原始發照日</code></td>
+            <td>NVS 分母、S 餐分母、車輛排除判定</td>
+          </tr>
+          <tr>
+            <td class="sheet">NVS明細</td>
+            <td>事實表（零件銷售粒度，1,068 列）</td>
+            <td><code>價別</code> <code>項目</code>（件號） <code>金額</code> <code>牌照號碼</code></td>
+            <td>NVS 分子</td>
+          </tr>
+          <tr>
+            <td class="sheet">加價購或零件換購轉回原價格</td>
+            <td>參照表（件號 → 還原金額，76 列）</td>
+            <td><code>件號</code> <code>金額</code></td>
+            <td>NVS 分子（加價購/零件換購還原）</td>
+          </tr>
+          <tr>
+            <td class="sheet">油品銷售明細</td>
+            <td>事實表（機油銷售粒度，6,798 列）</td>
+            <td><code>項目</code>（件號） <code>牌照號碼</code></td>
+            <td>S 餐分子（比對 5 組套餐機油件號）</td>
+          </tr>
+          <tr>
+            <td class="sheet">c12t32對象車型規格選配</td>
+            <td>參照表（合法規格組合白名單）</td>
+            <td><code>車型碼</code> <code>規格</code> <code>選配碼</code> <code>合併</code></td>
+            <td>S 餐分子（C12/T32 資格比對）</td>
+          </tr>
+          <tr>
+            <td class="sheet">比對c12t32對象車型規格選配</td>
+            <td>橋接表（車輛 × 規格選配 + CRM 欄位，1,958 列）</td>
+            <td><code>牌照號碼</code> <code>車型代碼</code> <code>規格</code> <code>選配碼</code></td>
+            <td>S 餐分子（與上表合併字串比對）</td>
+          </tr>
+          <tr>
+            <td class="sheet">L34&amp;T33專案車型</td>
+            <td>排除清單（4,929 列）</td>
+            <td><code>regono</code>（牌照） <code>modelcode</code></td>
+            <td>S 餐分母（T33 專案車輛排除）</td>
+          </tr>
+          <tr>
+            <td class="sheet">輪胎&amp;電瓶銷售明細</td>
+            <td>事實表（零件銷貨粒度，30,956 列）</td>
+            <td><code>零件分類</code> <code>工單類別</code> <code>牌照號碼</code> <code>數量</code> <code>退庫</code></td>
+            <td>輪胎/電瓶更換率分子</td>
+          </tr>
+          <tr>
+            <td class="sheet">輪胎&amp;電瓶有費台數</td>
+            <td>事實表（進廠工單粒度，3,768 列，142 欄含大量合約旗標）</td>
+            <td><code>車齡 (年)</code> <code>本次進廠里程</code> <code>工單類別</code> <code>牌照號碼</code></td>
+            <td>輪胎/電瓶更換率分母</td>
+          </tr>
+          <tr>
+            <td class="sheet">六大各廠目標</td>
+            <td>目標表（新北／台北各 1 組，9 品項 × 售價/成本/工資/毛利/年度目標）</td>
+            <td><code>品項</code> <code>銷售目標</code> <code>售價(未稅)</code> <code>營收目標(含工)</code> <code>獲利目標(含工)</code></td>
+            <td>六大商品目標達成矩陣</td>
+          </tr>
+          <tr>
+            <td class="sheet">六大銷售明細(零件) / (工資)</td>
+            <td>事實表（自由文字品名，各 3,352 / 1,282 列）</td>
+            <td><code>說明</code>（品名） <code>金額</code> <code>成本</code></td>
+            <td>六大商品目標達成矩陣（實際值）</td>
+          </tr>
+          <tr>
+            <td class="sheet">條件說明</td>
+            <td>業務邏輯文件（非資料表）</td>
+            <td>— 文字敘述 —</td>
+            <td>作為建模驗收基準，不匯入資料模型</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============ CALC LOGIC ============ -->
+  <div class="section">
+    <div class="section-num">Calculation Logic · DAX / SQL 建議</div>
+    <h2 style="font-size:20px;margin-bottom:6px;">四大核心指標計算邏輯</h2>
+    <p class="prose">以下以 <b>Power BI DAX</b> 為主要示例（Tableau／SQL 邏輯相同，差異僅在語法），並標註哪些步驟建議在 <b>資料前處理層（Power Query / dbt / SQL View）</b> 完成，而非直接寫在量值中——因為本案有多張「橋接表 / 白名單 / 排除清單」，用 DAX 逐列比對效能較差，先在 ETL 建好旗標欄位再彙總會乾淨很多。</p>
+
+    <div class="code-card">
+      <div class="ck-head"><span class="t">① NVS 單台產值</span><span class="target">目標 190 元/台</span></div>
+      <pre><code>-- Step 1（Power Query / SQL View）：在 NVS明細 建立「還原金額」欄
+還原金額 =
+  IF([價別] IN {"特價","理賠價","售價"}, [金額],
+     IF([價別] IN {"加價購","零件換購"},
+        LOOKUPVALUE(加價購轉回表[金額], 加價購轉回表[件號], [項目]),
+        BLANK()))
+
+-- Step 2（DAX 量值）
+NVS分子 := SUMX(NVS明細, [還原金額]) / 1.05
+
+NVS分母 :=
+  CALCULATE(
+      DISTINCTCOUNT(定保台數[牌照號碼]),
+      定保台數[品牌] = "NISSAN"
+  )
+
+NVS單台產值 := DIVIDE([NVS分子], [NVS分母])</code></pre>
+      <div class="note">注意：「金額」欄在 NVS明細／六大銷售明細中重複出現兩次（原始金額 vs 獎金金額），匯入時務必重新命名以免加總到錯誤欄位——這是本檔案最容易踩雷的地方。</div>
+    </div>
+
+    <div class="code-card">
+      <div class="ck-head"><span class="t">② S 餐使用率</span><span class="target">目標 96%</span></div>
+      <pre><code>-- Step 1（ETL）：定保台數 建立車輛屬性旗標
+是否S餐對象車型 = LEFT(車型代碼,3) IN {"B18","P15","C12","T32","T33"}
+是否排除_電動車 = LEFT(牌照號碼,1) = "E"
+是否排除_軍車   = LEFT(牌照號碼,1) = "軍"
+是否排除_租賃車 = (LEN(牌照號碼)=6 AND 牌照號碼 NOT LIKE "%-%") OR <其餘租賃格式規則>
+是否排除_公司車 = 是否排除_租賃車=FALSE AND LEN(車主) > 4
+是否排除_T33專案 = 車型代碼 LIKE "T33%"
+                    AND 牌照號碼 IN (SELECT regono FROM L34_T33專案車型)
+
+-- Step 2（ETL）：C12/T32 資格比對（僅此二車系需要）
+是否C12T32合格 =
+  車型代碼&規格&選配碼  -- 比對c12t32對象車型規格選配.合併
+  IN (SELECT 合併 FROM c12t32對象車型規格選配)
+  -- B18 / P15 / T33 車型不受此限制，視為天然合格
+
+-- Step 3（ETL）：是否使用S餐（比對油品銷售明細）
+是否使用S餐 =
+  牌照號碼 IN (
+    SELECT 牌照號碼 FROM 油品銷售明細
+    WHERE 項目 IN ("101210W30S23","101225W30S23","101220W20123",
+                   "101210W20C23","101220530123")
+  )
+
+-- Step 4（DAX 量值，讀取上面已算好的旗標欄）
+S餐分母 := CALCULATE(DISTINCTCOUNT(定保台數[牌照號碼]),
+             定保台數[是否S餐對象車型] = TRUE,
+             定保台數[是否排除_電動車] = FALSE,
+             定保台數[是否排除_軍車]   = FALSE,
+             定保台數[是否排除_租賃車] = FALSE,
+             定保台數[是否排除_公司車] = FALSE,
+             定保台數[是否排除_T33專案] = FALSE,
+             OR(定保台數[是否C12T32合格]=TRUE, NOT(LEFT(車型代碼,3) IN {"C12","T32"})))
+
+S餐分子 := CALCULATE([S餐分母的同一組車輛], 定保台數[是否使用S餐] = TRUE)
+S餐使用率 := DIVIDE([S餐分子], [S餐分母])</code></pre>
+      <div class="note">這是四個指標中邏輯最深的一個：牽涉 3 張排除/白名單表。強烈建議在 SQL View 或 Power Query 把「是否使用S餐」「是否合格」都算成 0/1 旗標欄後再匯入模型，量值只做 CALCULATE 加總——維護與除錯都容易得多。</div>
+    </div>
+
+    <div class="code-card">
+      <div class="ck-head"><span class="t">③ 輪胎更換率</span><span class="target">目標 10.8%</span></div>
+      <pre><code>輪胎分子 :=
+  CALCULATE(
+      DISTINCTCOUNT(輪胎電瓶銷售明細[牌照號碼]),
+      輪胎電瓶銷售明細[工單類別] = "自費",
+      輪胎電瓶銷售明細[零件分類] = "輪胎",
+      FILTER(輪胎電瓶銷售明細, [數量] - [退庫] > 0)
+  )
+
+輪胎分母 :=
+  CALCULATE(
+      DISTINCTCOUNT(輪胎電瓶有費台數[牌照號碼]),
+      輪胎電瓶有費台數[工單類別] = "自費",
+      OR(輪胎電瓶有費台數[車齡 (年)] > 4,
+         輪胎電瓶有費台數[本次進廠里程] > 40000)
+  )
+
+輪胎更換率 := DIVIDE([輪胎分子], [輪胎分母])</code></pre>
+      <div class="note">⚠ 兩張來源表在本次匯出的「期間」篩選不同步（銷售明細僅到 8/15，有費台數到 8/31）。正式建模時務必在資料源設定同一個期間參數，兩張表都用同一組日期界線，否則分子/分母時間窗不一致會系統性高估或低估更換率。</div>
+    </div>
+
+    <div class="code-card">
+      <div class="ck-head"><span class="t">④ 電瓶更換率</span><span class="target">目標 14.8%</span></div>
+      <pre><code>電瓶分子 := <公式同輪胎，零件分類="電瓶">
+電瓶分母 :=
+  CALCULATE(
+      DISTINCTCOUNT(輪胎電瓶有費台數[牌照號碼]),
+      輪胎電瓶有費台數[工單類別] = "自費",
+      OR(輪胎電瓶有費台數[車齡 (年)] > 2,
+         輪胎電瓶有費台數[本次進廠里程] > 20000)
+  )
+電瓶更換率 := DIVIDE([電瓶分子], [電瓶分母])</code></pre>
+      <div class="note">與輪胎共用同一張分母來源表，車齡/里程門檻不同（2年/20,000km vs 4年/40,000km）——建議做成參數表（Threshold Table）驅動，而非寫死兩份幾乎相同的量值。</div>
+    </div>
+
+    <div class="code-card">
+      <div class="ck-head"><span class="t">⑤ 六大商品營收與毛利達成率</span><span class="target">9 品項 × 月目標</span></div>
+      <pre><code>-- Step 1（ETL）：六大銷售明細(零件)/(工資) 的「說明」為自由文字品名，
+--            需先建立「品項分類對照表」(關鍵字 → 標準品項)
+品項分類對照:
+  說明 LIKE "%劃線碟%"            → 劃線碟
+  說明 LIKE "%椿頭%" / "%樁頭%"   → 電瓶樁頭
+  說明 LIKE "%冷煤強化劑%"         → 冷煤強化劑
+  說明 LIKE "%冷氣系統%"           → 冷氣系統養護
+  說明 LIKE "%鈦晶%內裝%"          → 鈦晶內裝
+  說明 LIKE "%鈦晶%外觀%"          → 鈦晶外觀
+  說明 LIKE "%空力雨刷%"           → 空力雨刷
+  說明 LIKE "%電動窗%"             → 電動窗養護
+  說明 LIKE "%卡鉗%潤滑%" / "%滑銷%" → 碟式煞車潤滑
+
+-- Step 2（DAX 量值）
+品項實際營收 := SUM(六大銷售明細零件[金額]) + SUM(六大銷售明細工資[金額])
+品項實際毛利 := [品項實際營收] - SUM(六大銷售明細零件[成本]) - SUM(六大銷售明細工資[成本])
+
+品項月目標營收 := LOOKUPVALUE(六大各廠目標[營收目標(含工)], 六大各廠目標[品項], [品項]) / 12
+品項月目標毛利 := LOOKUPVALUE(六大各廠目標[獲利目標(含工)], 六大各廠目標[品項], [品項]) / 12
+
+達成率 := DIVIDE([品項實際營收], [品項月目標營收])</code></pre>
+      <div class="note">⚠ 兩個待確認事項：(1) 目標表原始欄位「銷售目標／營收目標」判讀為<b>年度</b>目標（單價×年度目標台數=含工營收目標，經反算驗證吻合），除以 12 僅為近似月目標，正式邏輯建議向目標表擁有者確認是否已有月度拆分版本。(2) 新北／台北兩區塊目標數字完全相同，需確認這是「兩區各自的目標」（加總=全公司目標）還是「範本重複顯示」——目前設計先以不加總、取單一區塊值處理。</div>
+    </div>
+  </div>
+
+  <!-- ============ SLICERS ============ -->
+  <div class="section">
+    <div class="section-num">Interactivity · 互動切換器建議</div>
+    <h2 style="font-size:20px;margin-bottom:14px;">Slicers 設計</h2>
+    <div class="slicer-grid">
+      <div class="slicer-card"><div class="k">月份 / 期間</div><div class="v">依「入帳日期」或「發票日期」建立日期表，支援月選擇 + 近12個月趨勢；務必統一各事實表的日期基準（發票日 vs 結帳日 vs 開單時間，本檔案三者混用）。</div></div>
+      <div class="slicer-card"><div class="k">廠區 / 門市</div><div class="v">依「服務廠」欄位（如輔大廠、三重廠…20 個廠區）建立門市維度表；六大各廠目標另有新北/台北兩個區域分組，需建立門市→區域對照表串接。</div></div>
+      <div class="slicer-card"><div class="k">車型</div><div class="v">車型代碼前綴分組（B18/P15/C12/T32/T33 = S餐對象；其餘為一般車型），並提供「品牌」二級篩選（目前資料全為 NISSAN，未來若納入 INFINITI 需保留擴充欄位）。</div></div>
+      <div class="slicer-card"><div class="k">車輛類別</div><div class="v">一般車 / 公司車 / 租賃車 / 軍車 / 電動車 五態切換器，預設鎖定「一般車」；開放使用者手動勾選以檢視排除對象的影響幅度。</div></div>
+      <div class="slicer-card"><div class="k">工單類別</div><div class="v">自費 / 理賠 / 保固 等，輪胎、電瓶、六大商品指標皆與此欄位強相關，建議做成頁面層級篩選而非單一視覺篩選。</div></div>
+      <div class="slicer-card"><div class="k">品項 / 商品類別</div><div class="v">六大商品 9 品項（見下方策略提醒）+ 零件分類（輪胎/電瓶/化學品/油品…），供矩陣圖鑽取單一品項的門市排行。</div></div>
+    </div>
+  </div>
+
+  <!-- ============ STRATEGY NOTES ============ -->
+  <div class="section">
+    <div class="section-num">Strategic Notes · 分析與策略提醒</div>
+    <h2 style="font-size:20px;margin-bottom:14px;">建置前務必確認的 8 件事</h2>
+    <div class="insight-list">
+
+      <div class="insight">
+        <div class="badge" style="background:var(--critical)">1</div>
+        <div class="body"><b>「六大商品」實為 9 個品項，非 6 個</b>
+        <span>六大各廠目標表列出劃線碟、電瓶樁頭、冷煤強化劑、冷氣系統養護、鈦晶內裝、鈦晶外觀、空力雨刷、電動窗養護、碟式煞車潤滑共 9 項。命名沿用歷史慣稱即可，但儀表板標題與矩陣圖標籤建議明確標示 9 品項，避免使用者誤以為漏了 3 項。</span></div>
+      </div>
+
+      <div class="insight">
+        <div class="badge" style="background:var(--serious)">2</div>
+        <div class="body"><b>輪胎 / 電瓶更換率的分子分母期間不同步</b>
+        <span>本次匯出中「輪胎&電瓶銷售明細」僅涵蓋 8/1–8/15（半個月），但「輪胎&電瓶有費台數」（分母）涵蓋整月 8/1–8/31。直接相除會系統性高估更換率（本次試算輪胎 15.1%／電瓶 18.9% 明顯優於目標，需先排除此期間效應才能判斷是否真達標）。正式排程建議兩張表共用同一個日期參數表。</span></div>
+      </div>
+
+      <div class="insight">
+        <div class="badge" style="background:var(--warning)">3</div>
+        <div class="body"><b>六大商品本期實際達成率普遍偏低，其中 2 品項掛零</b>
+        <span>以年度目標 ÷12 估算月目標後，9 品項整體達成率約 25%，其中「冷氣系統養護」與「鈦晶外觀」本期完全無銷售紀錄。建議先確認是否為品名關鍵字比對遺漏（自由文字品名容易漏配），若確認真無銷售，則是第一個要追的營運缺口。</span></div>
+      </div>
+
+      <div class="insight">
+        <div class="badge" style="background:var(--warning)">4</div>
+        <div class="body"><b>六大各廠目標「新北」「台北」兩區塊數字完全相同</b>
+        <span>兩區的銷售目標、售價、成本、營收/獲利目標逐欄位比對完全一致，較不像是各自獨立的區域目標。建議與目標表維護者確認：究竟是「公司目標套用兩份範本」還是「兩區應加總才是全公司目標」，這會讓最終目標值差 2 倍，直接影響儀表板的達成率判讀。</span></div>
+      </div>
+
+      <div class="insight">
+        <div class="badge" style="background:var(--accent)">5</div>
+        <div class="body"><b>「金額」欄位在多張表中重複出現，需重新命名</b>
+        <span>NVS明細、六大銷售明細(零件/工資)、油品銷售明細皆有兩個「金額」欄（第一個為銷售金額，第二個緊接在百分比%之後、實為獎金金額）。Power Query 載入時務必依欄位順序重新命名，避免量值誤加總到獎金欄。</span></div>
+      </div>
+
+      <div class="insight">
+        <div class="badge" style="background:var(--accent)">6</div>
+        <div class="body"><b>S 餐資格判定需要 3 張橋接/白名單表，建議前處理成旗標</b>
+        <span>C12/T32 需比對「規格+選配碼」白名單、T33 需排除專案車型清單、B18/P15 則無額外限制。三種車型三套規則混在同一量值中會讓 DAX 難以維護，建議在 ETL 層把「是否合格」算成單一 0/1 欄位。</span></div>
+      </div>
+
+      <div class="insight">
+        <div class="badge" style="background:var(--accent)">7</div>
+        <div class="body"><b>各表日期基準不一致，需建立單一日期表</b>
+        <span>定保台數/NVS明細/六大銷售明細以「發票日」認定業績，油品銷售明細以「結帳日」，輪胎&電瓶銷售明細以「發票日」但輪胎&電瓶有費台數以「結帳日期」。建議統一以發票日建模型日期表，結帳日/開單時間保留為明細表的輔助欄位供追溯查核用。</span></div>
+      </div>
+
+      <div class="insight">
+        <div class="badge" style="background:var(--accent)">8</div>
+        <div class="body"><b>牌照號碼為車輛識別鍵，但存在重牌風險</b>
+        <span>所有排除判定（軍車/租賃車/電動車/公司車）與唯一計數都依賴「牌照號碼」去重。若車輛過戶後牌照被回收再發放（實務常見），跨月趨勢分析會誤判為同一台車。建議同時保留 VIN# 做交叉驗證，尤其是分析車輛回廠週期或客戶終身價值時。</span></div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>
+    <span>資料來源：零件DMS資料庫報表.xlsx（13 張工作表，期間 2026-08-01～08-31）</span>
+    <span>本頁 KPI 卡片數值為依「條件說明」工作表公式對原始明細試算之結果，供架構驗證用；正式上線前請以完整比對邏輯與對齊期間重新計算。</span>
+  </footer>
+
+</div>
+
+<script>
+  // ---- filter chip toggle (mock, no data binding) ----
+  document.querySelectorAll('#filterbar .chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const group = chip.dataset.group;
+      document.querySelectorAll(`#filterbar .chip[data-group="${group}"]`).forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+    });
+  });
+
+  // ---- six-category bullet chart data ----
+  const items = [
+    { name:'劃線碟',     rev:[600143,1090600],  profit:[206573,535267] },
+    { name:'電瓶樁頭',   rev:[169000,495833],   profit:[169000,427083] },
+    { name:'冷煤強化劑', rev:[125248,398200],   profit:[68158,207900]  },
+    { name:'冷氣系統養護', rev:[0,1003750],      profit:[0,929167]      },
+    { name:'鈦晶內裝',   rev:[162693,525583],   profit:[162693,398083] },
+    { name:'鈦晶外觀',   rev:[0,702000],         profit:[0,604500]      },
+    { name:'空力雨刷',   rev:[124649,546667],   profit:[56207,226667]  },
+    { name:'電動窗養護', rev:[192318,666667],   profit:[192303,638333] },
+    { name:'碟式煞車潤滑', rev:[147671,705000],  profit:[147671,695000]  },
+  ];
+
+  function statusColor(pct){
+    if(pct >= 0.9) return getVar('--good');
+    if(pct >= 0.6) return getVar('--warning');
+    if(pct >= 0.3) return getVar('--serious');
+    return getVar('--critical');
+  }
+  function getVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  function fmt(n){ return Math.round(n).toLocaleString('zh-TW'); }
+
+  function renderBullets(view){
+    const body = document.getElementById('bullet-body');
+    body.innerHTML = '';
+    items.forEach(it => {
+      const [actual, target] = it[view];
+      const pct = target > 0 ? actual/target : 0;
+      const fillPct = Math.min(pct,1)*100;
+      const color = statusColor(pct);
+      const row = document.createElement('div');
+      row.className = 'bullet-row';
+      row.innerHTML = `
+        <div class="bullet-label">${it.name}</div>
+        <div class="bullet-track">
+          <div class="target-mark" style="left:100%"></div>
+          <div class="fill" style="width:${fillPct}%;background:${color}"></div>
+        </div>
+        <div class="bullet-nums"><b>NT$ ${fmt(actual)}</b> / ${fmt(target)}　<span class="bullet-pct" style="color:${color}">${Math.round(pct*100)}%</span></div>
+      `;
+      body.appendChild(row);
+    });
+  }
+  renderBullets('rev');
+
+  document.querySelectorAll('#viewtabs .vtab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('#viewtabs .vtab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      renderBullets(tab.dataset.view);
+    });
+  });
+
+  // ---- illustrative heatmap ----
+  const heatRows = [
+    { metric:'S 餐使用率', vals:[93,89,71,68,97] },
+    { metric:'輪胎更換率', vals:[9.6,11.2,10.1,12.4,8.8] },
+    { metric:'電瓶更換率', vals:[13.5,15.8,14.0,16.9,12.1] },
+  ];
+  function seqColor(v, max){
+    const t = Math.max(0, Math.min(1, v/max));
+    const steps = ['--seq-100','--seq-250','--seq-400','--seq-550','--seq-700'];
+    const idx = Math.min(steps.length-1, Math.floor(t*steps.length));
+    return getVar(steps[idx]);
+  }
+  const heatBody = document.getElementById('heatbody');
+  heatRows.forEach(row => {
+    const max = Math.max(...row.vals) * 1.05;
+    const tr = document.createElement('tr');
+    let cells = `<td class="metric">${row.metric}</td>`;
+    row.vals.forEach(v => {
+      const bg = seqColor(v, max);
+      cells += `<td class="cell" style="background:${bg}">${v}%</td>`;
+    });
+    tr.innerHTML = cells;
+    heatBody.appendChild(tr);
+  });
+</script>
