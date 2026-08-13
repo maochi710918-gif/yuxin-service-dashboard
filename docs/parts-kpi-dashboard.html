@@ -384,12 +384,16 @@
           <div class="funnel-bar"><i style="width:0.2%;background:var(--critical)"></i></div>
         </div>
         <div class="funnel-item">
-          <div class="funnel-row"><span class="lbl">− 公司車（車主欄長度 &gt;4）</span><span class="val">293</span></div>
-          <div class="funnel-bar"><i style="width:12%;background:var(--warning)"></i></div>
+          <div class="funnel-row"><span class="lbl">− 租賃車（牌照格式判別，含 R- 開頭等 3 種樣式）</span><span class="val">116</span></div>
+          <div class="funnel-bar"><i style="width:4.7%;background:var(--serious)"></i></div>
         </div>
         <div class="funnel-item">
-          <div class="funnel-row"><span class="lbl">− 軍車 / 租賃車（牌照格式判別）</span><span class="val">0</span></div>
-          <div class="funnel-bar"><i style="width:0%;background:var(--serious)"></i></div>
+          <div class="funnel-row"><span class="lbl">− 公司車（車主欄長度 &gt;4，且非租賃/電動車）</span><span class="val">177</span></div>
+          <div class="funnel-bar"><i style="width:7.2%;background:var(--warning)"></i></div>
+        </div>
+        <div class="funnel-item">
+          <div class="funnel-row"><span class="lbl">− 軍車 / 計程車（牌照格式判別）</span><span class="val">0</span></div>
+          <div class="funnel-bar"><i style="width:0%;background:var(--critical)"></i></div>
         </div>
 
         <div class="funnel-total">
@@ -544,9 +548,25 @@ NVS單台產值 := DIVIDE([NVS分子], [NVS分母])</code></pre>
       <pre><code>-- Step 1（ETL）：定保台數 建立車輛屬性旗標
 是否S餐對象車型 = LEFT(車型代碼,3) IN {"B18","P15","C12","T32","T33"}
 是否排除_電動車 = LEFT(牌照號碼,1) = "E"
-是否排除_軍車   = LEFT(牌照號碼,1) = "軍"
-是否排除_租賃車 = (LEN(牌照號碼)=6 AND 牌照號碼 NOT LIKE "%-%") OR <其餘租賃格式規則>
-是否排除_公司車 = 是否排除_租賃車=FALSE AND LEN(車主) > 4
+
+-- 車輛類別判定：完整還原「條件說明」工作表原始 IF 公式（軍車/租賃車/計程車三段式判斷）
+車輛類別判定 =
+  VAR P = 牌照號碼
+  VAR L = LEN(P)
+  VAR DashPos = IFERROR(SEARCH("-", P), -1)
+  RETURN
+    IF(LEFT(P,1) = "軍", "軍車",
+    IF(AND(L=6, DashPos=-1), "租賃車",
+    IF(OR(
+         AND(L=8, DashPos=4, LEFT(P,1)="R"),
+         AND(DashPos=3, LEFT(P,1)=MID(P,2,1)),
+         AND(DashPos=5, RIGHT(P,1)=MID(P,6,1))
+       ), "租賃車",
+    IF(AND(L=6, OR(DashPos=3, DashPos=4)), "計程車", "一般車"))))
+
+是否排除_軍車   = 車輛類別判定 = "軍車"
+是否排除_租賃車 = 車輛類別判定 = "租賃車"
+是否排除_公司車 = 車輛類別判定 = "一般車" AND LEN(車主) > 4
 是否排除_T33專案 = 車型代碼 LIKE "T33%"
                     AND 牌照號碼 IN (SELECT regono FROM L34_T33專案車型)
 
@@ -603,7 +623,14 @@ S餐使用率 := DIVIDE([S餐分子], [S餐分母])</code></pre>
 
     <div class="code-card">
       <div class="ck-head"><span class="t">④ 電瓶更換率</span><span class="target">目標 14.8%</span></div>
-      <pre><code>電瓶分子 := <公式同輪胎，零件分類="電瓶">
+      <pre><code>電瓶分子 :=
+  CALCULATE(
+      DISTINCTCOUNT(輪胎電瓶銷售明細[牌照號碼]),
+      輪胎電瓶銷售明細[工單類別] = "自費",
+      輪胎電瓶銷售明細[零件分類] = "電瓶",
+      FILTER(輪胎電瓶銷售明細, [數量] - [退庫] > 0)
+  )
+
 電瓶分母 :=
   CALCULATE(
       DISTINCTCOUNT(輪胎電瓶有費台數[牌照號碼]),
