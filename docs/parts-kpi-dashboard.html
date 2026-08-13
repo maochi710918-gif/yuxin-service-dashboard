@@ -110,7 +110,13 @@
   }
   .chip:hover{ border-color:var(--accent); }
   .chip.active{ background:var(--accent); color:#fff; border-color:var(--accent); font-weight:600; }
+  .chip[data-live="false"].active{ background:var(--text-muted); border-color:var(--text-muted); }
   .fsep{ width:1px; align-self:stretch; background:var(--border); margin:0 4px; }
+  .live-tag{
+    font-size:10px; font-weight:700; color:var(--good); background:rgba(12,163,12,.14);
+    border-radius:999px; padding:1px 7px; margin-left:4px; letter-spacing:0;
+  }
+  .filter-disclaimer{ font-size:11.5px; color:var(--text-muted); margin:8px 2px 0; line-height:1.6; }
 
   /* ---------- Section titles ---------- */
   .section{ margin-top:34px; }
@@ -189,8 +195,11 @@
     margin-top:14px; padding-top:12px; border-top:1px dashed var(--border);
     display:flex; justify-content:space-between; align-items:baseline;
   }
-  .funnel-total .n{ font-size:24px; font-weight:700; color:var(--accent); font-variant-numeric:tabular-nums; }
+  .funnel-total .n{ font-size:24px; font-weight:700; color:var(--accent); font-variant-numeric:tabular-nums; transition:color .15s ease; }
   .funnel-total .l{ font-size:12.5px; color:var(--text-secondary); }
+  .funnel-item{ transition:opacity .15s ease; }
+  .funnel-item.included{ opacity:.4; }
+  .funnel-item.included .lbl::after{ content:" · 已納回計算"; font-weight:700; color:var(--good); }
 
   /* ---------- Heatmap ---------- */
   .heat-wrap{ overflow-x:auto; }
@@ -266,28 +275,29 @@
     </div>
   </div>
 
-  <!-- ============ FILTER BAR (mock slicers) ============ -->
+  <!-- ============ FILTER BAR ============ -->
   <div class="filterbar" id="filterbar">
     <span class="flabel">月份</span>
-    <div class="chip active" data-group="month">2026-08</div>
-    <div class="chip" data-group="month">2026-07</div>
-    <div class="chip" data-group="month">近12個月</div>
+    <div class="chip active" data-group="month" data-live="false">2026-08</div>
+    <div class="chip" data-group="month" data-live="false">2026-07</div>
+    <div class="chip" data-group="month" data-live="false">近12個月</div>
     <div class="fsep"></div>
     <span class="flabel">廠區</span>
-    <div class="chip active" data-group="area">全部</div>
-    <div class="chip" data-group="area">新北</div>
-    <div class="chip" data-group="area">台北</div>
+    <div class="chip active" data-group="area" data-live="false">全部</div>
+    <div class="chip" data-group="area" data-live="false">新北</div>
+    <div class="chip" data-group="area" data-live="false">台北</div>
     <div class="fsep"></div>
     <span class="flabel">車型</span>
-    <div class="chip active" data-group="model">全部車型</div>
-    <div class="chip" data-group="model">S餐對象 B18/P15/C12/T32/T33</div>
+    <div class="chip active" data-group="model" data-live="false">全部車型</div>
+    <div class="chip" data-group="model" data-live="false">S餐對象 B18/P15/C12/T32/T33</div>
     <div class="fsep"></div>
-    <span class="flabel">車輛類別</span>
-    <div class="chip active" data-group="excl">一般車</div>
-    <div class="chip" data-group="excl">含公司車</div>
-    <div class="chip" data-group="excl">含租賃/軍車</div>
-    <div class="chip" data-group="excl">含電動車</div>
+    <span class="flabel">車輛類別 <span class="live-tag">已連動右側漏斗圖</span></span>
+    <div class="chip active" data-group="excl" data-live="true" data-excl-key="general">一般車</div>
+    <div class="chip" data-group="excl" data-live="true" data-excl-key="company">含公司車</div>
+    <div class="chip" data-group="excl" data-live="true" data-excl-key="rental">含租賃車</div>
+    <div class="chip" data-group="excl" data-live="true" data-excl-key="ev">含電動車</div>
   </div>
+  <p class="filter-disclaimer">＊「車輛類別」篩選器已接上本檔案試算之真實統計，切換後右側篩選漏斗圖會即時重新計算。「月份／廠區／車型」為版面規劃示意，正式串接資料源後才會連動運算（目前點擊僅會標示選取狀態，不會變更下方數字，避免造成已連動的錯覺）。</p>
 
   <!-- ============ KPI CARDS ============ -->
   <div class="section">
@@ -379,15 +389,15 @@
           <div class="funnel-row"><span class="lbl">NISSAN 定保台數（牌照唯一）</span><span class="val">2,451</span></div>
           <div class="funnel-bar"><i style="width:100%;background:var(--cat-1)"></i></div>
         </div>
-        <div class="funnel-item">
+        <div class="funnel-item" data-row="ev">
           <div class="funnel-row"><span class="lbl">− 電動車（牌照 E 開頭）</span><span class="val">6</span></div>
           <div class="funnel-bar"><i style="width:0.2%;background:var(--critical)"></i></div>
         </div>
-        <div class="funnel-item">
+        <div class="funnel-item" data-row="rental">
           <div class="funnel-row"><span class="lbl">− 租賃車（牌照格式判別，含 R- 開頭等 3 種樣式）</span><span class="val">116</span></div>
           <div class="funnel-bar"><i style="width:4.7%;background:var(--serious)"></i></div>
         </div>
-        <div class="funnel-item">
+        <div class="funnel-item" data-row="company">
           <div class="funnel-row"><span class="lbl">− 公司車（車主欄長度 &gt;4，且非租賃/電動車）</span><span class="val">177</span></div>
           <div class="funnel-bar"><i style="width:7.2%;background:var(--warning)"></i></div>
         </div>
@@ -397,8 +407,8 @@
         </div>
 
         <div class="funnel-total">
-          <div><div class="l">納入 KPI 分母之一般車輛</div></div>
-          <div class="n">2,152</div>
+          <div><div class="l" id="funnel-total-label">納入 KPI 分母之一般車輛</div></div>
+          <div class="n" id="funnel-total-value">2,152</div>
         </div>
       </div>
 
@@ -748,12 +758,35 @@ S餐使用率 := DIVIDE([S餐分子], [S餐分母])</code></pre>
 </div>
 
 <script>
-  // ---- filter chip toggle (mock, no data binding) ----
+  // ---- filter chip toggle ----
+  // 「車輛類別」(data-live="true") 會真的重算下方漏斗圖；其餘篩選器只切換選取樣式，
+  // 因為本頁尚未串接對應期間/廠區/車型的細分資料，切換它們不應該假裝有連動。
+  const FUNNEL_BASE = 2451;
+  const FUNNEL_CATS = { ev: 6, rental: 116, company: 177 }; // 真實統計數（見「策略提醒」條目）
+
+  function recomputeFunnel(includeKey){
+    let total = FUNNEL_BASE;
+    Object.keys(FUNNEL_CATS).forEach(key => {
+      const row = document.querySelector(`.funnel-item[data-row="${key}"]`);
+      const isIncluded = (key === includeKey);
+      row.classList.toggle('included', isIncluded);
+      if (!isIncluded) total -= FUNNEL_CATS[key];
+    });
+    const label = includeKey === 'general'
+      ? '納入 KPI 分母之一般車輛'
+      : '納入 KPI 分母之一般車輛（已納回所選類別）';
+    document.getElementById('funnel-total-label').textContent = label;
+    document.getElementById('funnel-total-value').textContent = total.toLocaleString('zh-TW');
+  }
+
   document.querySelectorAll('#filterbar .chip').forEach(chip => {
     chip.addEventListener('click', () => {
       const group = chip.dataset.group;
       document.querySelectorAll(`#filterbar .chip[data-group="${group}"]`).forEach(c => c.classList.remove('active'));
       chip.classList.add('active');
+      if (chip.dataset.live === 'true' && group === 'excl') {
+        recomputeFunnel(chip.dataset.exclKey);
+      }
     });
   });
 
