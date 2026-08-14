@@ -779,6 +779,34 @@ S餐使用率 := DIVIDE([S餐分子], [S餐分母])</code></pre>
     document.getElementById('funnel-total-value').textContent = total.toLocaleString('zh-TW');
   }
 
+  // 每一次點擊都要有明確、看得到的反應——即使該篩選器尚未接資料，
+  // 也要跳出提示告知使用者「點到了、但這個還沒接」，不要讓使用者猜。
+  let toastTimer = null;
+  function showToast(msg, tone){
+    let el = document.getElementById('chip-toast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'chip-toast';
+      el.style.cssText = `
+        position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(0);
+        background:${tone==='live' ? 'var(--good)' : 'var(--surface-2)'};
+        color:${tone==='live' ? '#fff' : 'var(--text-primary)'};
+        border:1px solid ${tone==='live' ? 'var(--good)' : 'var(--border)'};
+        padding:10px 18px; border-radius:999px; font-size:13px; font-weight:600;
+        box-shadow:0 4px 20px rgba(0,0,0,.25); z-index:9999; opacity:0; transition:opacity .15s ease;
+        white-space:nowrap;
+      `;
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.style.background = tone==='live' ? 'var(--good)' : 'var(--surface-2)';
+    el.style.color = tone==='live' ? '#fff' : 'var(--text-primary)';
+    el.style.borderColor = tone==='live' ? 'var(--good)' : 'var(--border)';
+    requestAnimationFrame(() => { el.style.opacity = '1'; });
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.style.opacity = '0'; }, 2200);
+  }
+
   document.querySelectorAll('#filterbar .chip').forEach(chip => {
     chip.addEventListener('click', () => {
       const group = chip.dataset.group;
@@ -786,6 +814,9 @@ S餐使用率 := DIVIDE([S餐分子], [S餐分母])</code></pre>
       chip.classList.add('active');
       if (chip.dataset.live === 'true' && group === 'excl') {
         recomputeFunnel(chip.dataset.exclKey);
+        showToast('✓ 已重新計算車輛排除漏斗圖（見下方）', 'live');
+      } else {
+        showToast('已選取「' + chip.textContent.trim() + '」－此篩選器為版面示意，尚未接資料源', 'mock');
       }
     });
   });
